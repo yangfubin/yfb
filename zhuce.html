@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		* {
+			margin: 0;
+			padding: 0;
+			outline: none;
+		}
+		#box {
+			width: 450px;
+			margin: 100px auto;
+			border: 1px solid gray;
+		}
+		#box #logoimg {
+			width: 45px;
+			height: 45px;
+			border-radius: 45px;
+		}
+	</style>
+	<link rel="stylesheet" href="css/style.css">
+	<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="js/jquery.form.js"></script>
+	<script type="text/javascript" src="js/myUpload.js"></script>
+</head>
+<body>
+<div id="box">
+<form id="biaodan" enctype="multipart/form-data">
+    <img src="timg.jpeg" id="logoimg"></br>
+	账号:<input type="text" name="phone" placeholder="请输入手机号" id="phone"><span></span></br>
+	密码:<input type="password" name="passwd" placeholder="请输入密码" id="passwd"><span></span></br>
+	请上传头像:<div id="myUpload"></div></br>
+	<input type="button" value="注册" id="btn">
+</form>	
+</div>
+<div class="register">
+	账号:<input type="text" name="phone" placeholder="请输入手机号">
+	密码:<input type="password" name="passwd" placeholder="请输入手机号">
+	<input type="button" value="登录" id="deng">
+</div>
+<img src="" alt="" id="data_img" style="width:50px;height:50px;"> 欢迎登录：<span id="data_logo"></span>
+<script type="text/javascript">
+	var imgStr = "";
+	$("#myUpload").upload({uploadPath:'php/upload.php', isMulti:true,width:'30px',height:'30px',callback:function(msg){
+			imgStr=msg;
+			console.log(imgStr)
+        }
+	});
+	$('#deng').click(function(){
+            // 判断用户名密码是否为空
+            if ($('.register input').eq(0).val()==''&&$('.register input').eq(1).val()=='') {
+                alert('用户名和密码不能为空')
+                return
+            }
+            // 判断登录成功或失败
+            $.ajax({
+                url:'mvc/index.php?c=Login&a=login',
+                type:'post',
+                data:{
+                    username:$('.register input').eq(0).val(),
+                    password:$('.register input').eq(1).val(),
+                },
+                success:function(str){
+					var datas=JSON.parse(str)
+                    if (datas.code==1) {
+						$('#data_img').attr('src',datas.data);
+						$('#data_logo').html(datas.message);
+                        alert('登录成功')
+                    }
+                    else if(datas.code==2){
+                        alert('用户名不存在')
+                    }
+                    else{
+                        alert('用户名或密码有误')
+                    }
+                }
+            })
+		})
+		// 点击注册
+	$('#btn').click(function(){
+            if ($('#box span').eq(0).text()=='用户已存在') {
+                alert('用户已存在')
+                return;
+            }
+            $.ajax({
+                url:'mvc/index.php?c=Login&a=register',
+                type:'post',
+                data:{
+                    username:$('#box input').eq(0).val(),
+					password:$('#box input').eq(1).val(),
+					url:$('#logoimg').attr('src'),
+                },
+                success:function(data){
+					console.log(data)
+                    var str=JSON.parse(data);
+                    if (str.code=='200') {
+                        alert('注册成功')
+                    }
+                }
+            })
+		})
+		//查找数据库判断号码
+	$('#box input').eq(0).blur(function(){
+            var reg=/^(18|15|13|14|17)\d{9}/g;
+            if (!reg.test($(this).val())) {
+                $('#box span').eq(0).html('手机号有误')
+                return;
+            }
+            $('#box span').eq(0).html('')
+            // 查找数据库，判断是否存在
+            $.ajax({
+                url:'mvc/index.php?c=Login&a=query',
+                type:'post',
+                data:{
+                    name:$('#box input').eq(0).val(),
+                },
+                success:function(data){
+                    if (data=='') {
+                        return;
+                    }
+                    var str=JSON.parse(data);
+                    if (str.code=='505') {
+                        $('#box span').eq(0).html('用户已存在')
+                    }
+                }
+            })
+		})
+		//判断密码长度
+		$('#box input').eq(1).blur(function(){
+            if ($(this).val().length>=6&&$(this).val().length<=18) {
+                $('#box span').eq(1).html('')
+            }
+            else{
+                $('#box span').eq(1).html('请输入6-18位')
+            }
+        })
+         
+	
+</script>
+</div>
+</body>
+</html>
